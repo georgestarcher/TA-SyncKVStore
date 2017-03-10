@@ -1,0 +1,54 @@
+<form class="form-horizontal form-complex">
+<div class="control-group">
+	<label class="control-label" for="synckvstore_u_splunkserver">Splunk Server <span class="required">*</span> </label>
+    <div class="controls">
+	<input type="text" name="action.synckvstore.param.u_splunkserver" id="synckvstore_u_splunkserver"/>
+                <span class="help-block"> 
+                    Destination Splunk Server Name or IP
+                </span>
+    </div>
+</div>
+<div class="control-group">
+	<label class="control-label" for="synckvstore_u_destappname">Destination App <span class="required">*</span> </label>
+    <div class="controls">
+	<input type="text" name="action.synckvstore.param.u_destappname" id="synckvstore_u_destappname"/>
+                <span class="help-block"> 
+                    Destination App containing the KV Store Collection
+                </span>
+    </div>
+</div>
+<div class="control-group">
+	<label class="control-label" for="synckvstore_u_destcollection">Destination Collection <span class="required">*</span> </label>
+    <div class="controls">
+	<input type="text" name="action.synckvstore.param.u_destcollection" id="synckvstore_u_destcollection"/>
+                <span class="help-block"> 
+                    Destination Collection
+                </span>
+    </div>
+</div>
+<div class="control-group">
+	<label class="control-label">Destination Table Action</label>
+		<div class="controls">
+				<label class="radio" for="synckvstore_u_desttableaction_replace">
+					<input type="radio" name="action.synckvstore.param.u_desttableaction" id="synckvstore_u_desttableaction_replace" value="replace"/>
+					Replace Table
+				</label>
+				<label class="radio" for="synckvstore_u_desttableaction_update">
+					<input type="radio" name="action.synckvstore.param.u_desttableaction" id="synckvstore_u_desttableaction_update" value="update"/>
+					Update Table
+				</label>
+                <span class="help-block"> 
+                    Choose to force destination table full replacement or update table.
+                </span>
+		</div>
+</div>
+<div class="control-group">
+	<label class="control-label" for="synckvstore_u_username">Stored Username <span class="required">*</span> </label>
+    <div class="controls">
+	<input type="text" name="action.synckvstore.param.u_username" id="synckvstore_u_username"/>
+                <span class="help-block"> 
+                    Username of the stored service account for the remote Splunk Server
+                </span>
+    </div>
+</div>
+</form>
