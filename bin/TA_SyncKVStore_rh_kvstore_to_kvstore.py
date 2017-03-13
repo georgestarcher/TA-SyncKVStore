@@ -74,7 +74,7 @@ fields = [
         'u_desttableaction',
         required=True,
         encrypted=False,
-        default='replace',
+        default='update',
         validator=None
     ), 
     field.RestField(

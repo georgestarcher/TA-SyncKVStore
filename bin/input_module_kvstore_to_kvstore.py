@@ -160,7 +160,6 @@ def collect_events(helper, ew):
                 splunk_url = ''.join(['https://',self.splunk_server,':8089/servicesNS/nobody/',self.splunk_app,'/storage/collections/data/',self.splunk_collection,'/','batch_save'])
                 payload_length = sum(len(json.dumps(item)) for item in data)
                 r = requests.post(splunk_url,verify=_splunk_server_verify,headers=headers,data=json.dumps(data))
-                helper.log_info(" API POST: {}".format(r.text))
                 if not r.status_code == requests.codes.ok:
                     helper.log_error("{}".format(r.text))
                 self.flushQueue.task_done()

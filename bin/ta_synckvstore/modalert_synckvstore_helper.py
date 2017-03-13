@@ -94,7 +94,6 @@ def process_event(helper, *args, **kwargs):
                 splunk_url = ''.join(['https://',self.splunk_server,':8089/servicesNS/nobody/',self.splunk_app,'/storage/collections/data/',self.splunk_collection,'/','batch_save'])
                 payload_length = sum(len(json.dumps(item)) for item in data)
                 r = requests.post(splunk_url,auth=(self.splunk_user,self.splunk_password),verify=_splunk_server_verify,headers=headers,data=json.dumps(data))
-                helper.log_info(" API POST: {}".format(r.text))
                 if not r.status_code == requests.codes.ok:
                     helper.log_error("{}".format(r.text))
                 self.flushQueue.task_done()
@@ -116,7 +115,7 @@ def process_event(helper, *args, **kwargs):
 
     u_desttableaction = helper.get_param("u_desttableaction")
     helper.log_info("u_desttableaction={}".format(u_desttableaction))
-
+    
     u_username = helper.get_param("u_username")
     helper.log_info("u_username={}".format(u_username))
     
