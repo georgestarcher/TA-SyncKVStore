@@ -1,185 +1,372 @@
 {
+    "meta": {
+        "apiVersion": "3.0.0", 
+        "restRoot": "TA_SyncKVStore", 
+        "name": "TA-SyncKVStore", 
+        "displayName": "SyncKVStore", 
+        "version": "1.0.1"
+    }, 
     "pages": {
-        "configuration": {
-            "description": "Set up your add-on", 
-            "tabs": [
+        "inputs": {
+            "services": [
                 {
+                    "title": "KVStore to Index", 
+                    "name": "kvstore_to_index", 
                     "entity": [
                         {
                             "field": "name", 
+                            "required": true, 
+                            "label": "Name", 
                             "validators": [
-                                {
-                                    "minLength": 1, 
-                                    "maxLength": 50, 
-                                    "errorMsg": "Length of ID should be between 1 and 50", 
-                                    "type": "string"
-                                }, 
                                 {
                                     "pattern": "^[a-zA-Z]\\w*$", 
-                                    "errorMsg": "Account name must start with a letter and followed by alphabetic letters, digits or underscores.", 
-                                    "type": "regex"
+                                    "type": "regex", 
+                                    "errorMsg": "Input Name must start with a letter and followed by alphabetic letters, digits or underscores."
+                                }, 
+                                {
+                                    "minLength": 1, 
+                                    "errorMsg": "Length of input name should be between 1 and 100", 
+                                    "type": "string", 
+                                    "maxLength": 100
                                 }
                             ], 
-                            "help": "Enter a unique name for this account.", 
                             "type": "text", 
-                            "label": "Account name", 
-                            "required": true
+                            "help": "Enter a unique name for the data input"
                         }, 
                         {
-                            "field": "username", 
+                            "field": "interval", 
                             "required": true, 
-                            "help": "Enter the username for this account.", 
+                            "label": "Interval", 
+                            "validators": [
+                                {
+                                    "pattern": "^\\-[1-9]\\d*$|^\\d*$", 
+                                    "type": "regex", 
+                                    "errorMsg": "Interval must be an integer."
+                                }
+                            ], 
+                            "type": "text", 
+                            "help": "Time interval of input in seconds."
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "minLength": 1, 
+                                    "errorMsg": "Length of index name should be between 1 and 80.", 
+                                    "type": "string", 
+                                    "maxLength": 80
+                                }
+                            ], 
+                            "required": true, 
+                            "label": "Index", 
+                            "defaultValue": "default", 
                             "options": {
-                                "placeholder": "Enter the username here"
+                                "blackList": "^_.*$", 
+                                "endpointUrl": "data/indexes", 
+                                "createSearchChoice": true
                             }, 
-                            "type": "text", 
-                            "label": "Username", 
-                            "validators": [
-                                {
-                                    "minLength": 1, 
-                                    "maxLength": 200, 
-                                    "errorMsg": "Length of username should be between 1 and 200", 
-                                    "type": "string"
-                                }
-                            ]
+                            "type": "singleSelect", 
+                            "field": "index"
                         }, 
                         {
-                            "field": "password", 
+                            "field": "u_splunk_server", 
+                            "label": "Splunk Server", 
                             "required": true, 
-                            "help": "Enter the password for this account.", 
-                            "type": "text", 
-                            "label": "Password", 
                             "validators": [
                                 {
-                                    "minLength": 1, 
-                                    "maxLength": 8192, 
-                                    "errorMsg": "Length of password should be between 1 and 8192", 
-                                    "type": "string"
+                                    "minLength": 0, 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "type": "string", 
+                                    "maxLength": 8192
                                 }
                             ], 
-                            "encrypted": true
-                        }
-                    ], 
-                    "name": "account", 
-                    "title": "Account", 
-                    "table": {
-                        "actions": [
-                            "edit", 
-                            "delete", 
-                            "clone"
-                        ], 
-                        "header": [
-                            {
-                                "label": "Account name", 
-                                "field": "name"
+                            "type": "text", 
+                            "help": "The Remote Splunk Server with the source KVStore"
+                        }, 
+                        {
+                            "field": "u_source_app", 
+                            "label": "Source App", 
+                            "required": true, 
+                            "validators": [
+                                {
+                                    "minLength": 0, 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "type": "string", 
+                                    "maxLength": 8192
+                                }
+                            ], 
+                            "type": "text", 
+                            "help": "The remote app context with the source KVStore Collection"
+                        }, 
+                        {
+                            "field": "u_source_collection", 
+                            "label": "Source Collection", 
+                            "required": true, 
+                            "validators": [
+                                {
+                                    "minLength": 0, 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "type": "string", 
+                                    "maxLength": 8192
+                                }
+                            ], 
+                            "type": "text", 
+                            "help": "The remote source KVStore Collection Name"
+                        }, 
+                        {
+                            "field": "global_account", 
+                            "label": "Global Account", 
+                            "required": true, 
+                            "options": {
+                                "referenceName": "account"
                             }, 
-                            {
-                                "label": "Username", 
-                                "field": "username"
-                            }
-                        ]
-                    }
+                            "type": "singleSelect", 
+                            "help": "The stored rest API credential valid on the remote Splunk Server with permissions to the source KVStore"
+                        }
+                    ]
                 }, 
                 {
+                    "title": "KVStore to KVStore", 
+                    "name": "kvstore_to_kvstore", 
                     "entity": [
                         {
-                            "label": "Log level", 
-                            "field": "loglevel", 
-                            "defaultValue": "INFO", 
+                            "field": "name", 
+                            "required": true, 
+                            "label": "Name", 
+                            "validators": [
+                                {
+                                    "pattern": "^[a-zA-Z]\\w*$", 
+                                    "type": "regex", 
+                                    "errorMsg": "Input Name must start with a letter and followed by alphabetic letters, digits or underscores."
+                                }, 
+                                {
+                                    "minLength": 1, 
+                                    "errorMsg": "Length of input name should be between 1 and 100", 
+                                    "type": "string", 
+                                    "maxLength": 100
+                                }
+                            ], 
+                            "type": "text", 
+                            "help": "Enter a unique name for the data input"
+                        }, 
+                        {
+                            "field": "interval", 
+                            "required": true, 
+                            "label": "Interval", 
+                            "validators": [
+                                {
+                                    "pattern": "^\\-[1-9]\\d*$|^\\d*$", 
+                                    "type": "regex", 
+                                    "errorMsg": "Interval must be an integer."
+                                }
+                            ], 
+                            "type": "text", 
+                            "help": "Time interval of input in seconds."
+                        }, 
+                        {
+                            "validators": [
+                                {
+                                    "minLength": 1, 
+                                    "errorMsg": "Length of index name should be between 1 and 80.", 
+                                    "type": "string", 
+                                    "maxLength": 80
+                                }
+                            ], 
+                            "required": true, 
+                            "label": "Index", 
+                            "defaultValue": "default", 
                             "options": {
-                                "autoCompleteFields": [
-                                    {
-                                        "label": "DEBUG", 
-                                        "value": "DEBUG"
-                                    }, 
-                                    {
-                                        "label": "INFO", 
-                                        "value": "INFO"
-                                    }, 
-                                    {
-                                        "label": "WARNING", 
-                                        "value": "WARNING"
-                                    }, 
-                                    {
-                                        "label": "ERROR", 
-                                        "value": "ERROR"
-                                    }, 
-                                    {
-                                        "label": "CRITICAL", 
-                                        "value": "CRITICAL"
-                                    }
-                                ], 
-                                "disableSearch": true
+                                "blackList": "^_.*$", 
+                                "endpointUrl": "data/indexes", 
+                                "createSearchChoice": true
                             }, 
-                            "type": "singleSelect"
+                            "type": "singleSelect", 
+                            "field": "index"
+                        }, 
+                        {
+                            "field": "u_splunkserver", 
+                            "label": "Splunk Server", 
+                            "required": true, 
+                            "validators": [
+                                {
+                                    "minLength": 0, 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "type": "string", 
+                                    "maxLength": 8192
+                                }
+                            ], 
+                            "type": "text", 
+                            "help": "The Remote Splunk Server with the source KVStore"
+                        }, 
+                        {
+                            "field": "u_srcapp", 
+                            "label": "Source App", 
+                            "required": true, 
+                            "validators": [
+                                {
+                                    "minLength": 0, 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "type": "string", 
+                                    "maxLength": 8192
+                                }
+                            ], 
+                            "type": "text", 
+                            "help": "The remote app context with the source KVStore Collection"
+                        }, 
+                        {
+                            "field": "u_srccollection", 
+                            "label": "Source Collection", 
+                            "required": true, 
+                            "validators": [
+                                {
+                                    "minLength": 0, 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "type": "string", 
+                                    "maxLength": 8192
+                                }
+                            ], 
+                            "type": "text", 
+                            "help": "The remote source KVStore Collection Name"
+                        }, 
+                        {
+                            "field": "global_account", 
+                            "label": "Global Account", 
+                            "required": true, 
+                            "options": {
+                                "referenceName": "account"
+                            }, 
+                            "type": "singleSelect", 
+                            "help": "The stored rest API credential valid on the remote Splunk Server with permissions to the source KVStore"
+                        }, 
+                        {
+                            "required": true, 
+                            "field": "u_desttableaction", 
+                            "label": "Destination Table Action", 
+                            "defaultValue": "update", 
+                            "options": {
+                                "items": [
+                                    {
+                                        "value": "replace", 
+                                        "label": "Replace Table"
+                                    }, 
+                                    {
+                                        "value": "update", 
+                                        "label": "Update Table"
+                                    }
+                                ]
+                            }, 
+                            "type": "radio", 
+                            "help": "Choose to force destination table full replacement or update table."
+                        }, 
+                        {
+                            "field": "u_destapp", 
+                            "label": "Destination App", 
+                            "required": true, 
+                            "validators": [
+                                {
+                                    "minLength": 0, 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "type": "string", 
+                                    "maxLength": 8192
+                                }
+                            ], 
+                            "type": "text", 
+                            "help": "The local app context with the destination KVStore Collection"
+                        }, 
+                        {
+                            "field": "u_destcollection", 
+                            "label": "Destination Collection", 
+                            "required": true, 
+                            "validators": [
+                                {
+                                    "minLength": 0, 
+                                    "errorMsg": "Max length of text input is 8192", 
+                                    "type": "string", 
+                                    "maxLength": 8192
+                                }
+                            ], 
+                            "type": "text", 
+                            "help": "The local destination KVStore Collection Name"
                         }
-                    ], 
-                    "name": "logging", 
-                    "title": "Logging"
+                    ]
                 }
             ], 
-            "title": "Configuration"
-        }, 
-        "inputs": {
-            "description": "Manage your data inputs", 
             "title": "Inputs", 
+            "description": "Manage your data inputs", 
             "table": {
                 "moreInfo": [
                     {
-                        "label": "Name", 
-                        "field": "name"
+                        "field": "name", 
+                        "label": "Name"
                     }, 
                     {
-                        "label": "Interval", 
-                        "field": "interval"
+                        "field": "interval", 
+                        "label": "Interval"
                     }, 
                     {
-                        "label": "Index", 
-                        "field": "index"
+                        "field": "index", 
+                        "label": "Index"
                     }, 
                     {
-                        "label": "Status", 
-                        "field": "disabled"
+                        "field": "disabled", 
+                        "label": "Status"
                     }, 
                     {
-                        "label": "Splunk Server", 
-                        "field": "u_splunk_server"
+                        "field": "u_splunk_server", 
+                        "label": "Splunk Server"
                     }, 
                     {
-                        "label": "Source App", 
-                        "field": "u_source_app"
+                        "field": "u_source_app", 
+                        "label": "Source App"
                     }, 
                     {
-                        "label": "Source Collection", 
-                        "field": "u_source_collection"
+                        "field": "u_source_collection", 
+                        "label": "Source Collection"
                     }, 
                     {
-                        "label": "Global Account", 
-                        "field": "global_account"
+                        "field": "global_account", 
+                        "label": "Global Account"
                     }, 
                     {
-                        "label": "Splunk Server", 
-                        "field": "u_splunkserver"
+                        "field": "u_splunkserver", 
+                        "label": "Splunk Server"
                     }, 
                     {
-                        "label": "Source App", 
-                        "field": "u_srcapp"
+                        "field": "u_srcapp", 
+                        "label": "Source App"
                     }, 
                     {
-                        "label": "Source Collection", 
-                        "field": "u_srccollection"
+                        "field": "u_srccollection", 
+                        "label": "Source Collection"
                     }, 
                     {
-                        "label": "Destination Table Action", 
-                        "field": "u_desttableaction"
+                        "field": "u_desttableaction", 
+                        "label": "Destination Table Action"
                     }, 
                     {
-                        "label": "Destination App", 
-                        "field": "u_destapp"
+                        "field": "u_destapp", 
+                        "label": "Destination App"
                     }, 
                     {
-                        "label": "Destination Collection", 
-                        "field": "u_destcollection"
+                        "field": "u_destcollection", 
+                        "label": "Destination Collection"
+                    }
+                ], 
+                "header": [
+                    {
+                        "field": "name", 
+                        "label": "Name"
+                    }, 
+                    {
+                        "field": "interval", 
+                        "label": "Interval"
+                    }, 
+                    {
+                        "field": "index", 
+                        "label": "Index"
+                    }, 
+                    {
+                        "field": "disabled", 
+                        "label": "Status"
                     }
                 ], 
                 "actions": [
@@ -187,315 +374,128 @@
                     "enable", 
                     "delete", 
                     "clone"
-                ], 
-                "header": [
-                    {
-                        "label": "Name", 
-                        "field": "name"
-                    }, 
-                    {
-                        "label": "Interval", 
-                        "field": "interval"
-                    }, 
-                    {
-                        "label": "Index", 
-                        "field": "index"
-                    }, 
-                    {
-                        "label": "Status", 
-                        "field": "disabled"
-                    }
                 ]
-            }, 
-            "services": [
+            }
+        }, 
+        "configuration": {
+            "title": "Configuration", 
+            "description": "Set up your add-on", 
+            "tabs": [
                 {
+                    "title": "Account", 
+                    "name": "account", 
+                    "table": {
+                        "header": [
+                            {
+                                "field": "name", 
+                                "label": "Account name"
+                            }, 
+                            {
+                                "field": "username", 
+                                "label": "Username"
+                            }
+                        ], 
+                        "actions": [
+                            "edit", 
+                            "delete", 
+                            "clone"
+                        ]
+                    }, 
                     "entity": [
                         {
                             "field": "name", 
+                            "required": true, 
+                            "label": "Account name", 
                             "validators": [
                                 {
-                                    "pattern": "^[a-zA-Z]\\w*$", 
-                                    "errorMsg": "Input Name must start with a letter and followed by alphabetic letters, digits or underscores.", 
-                                    "type": "regex"
+                                    "minLength": 1, 
+                                    "errorMsg": "Length of ID should be between 1 and 50", 
+                                    "type": "string", 
+                                    "maxLength": 50
                                 }, 
                                 {
-                                    "minLength": 1, 
-                                    "maxLength": 100, 
-                                    "errorMsg": "Length of input name should be between 1 and 100", 
-                                    "type": "string"
+                                    "pattern": "^[a-zA-Z]\\w*$", 
+                                    "type": "regex", 
+                                    "errorMsg": "Account name must start with a letter and followed by alphabetic letters, digits or underscores."
                                 }
                             ], 
-                            "help": "Enter a unique name for the data input", 
                             "type": "text", 
-                            "label": "Name", 
-                            "required": true
+                            "help": "Enter a unique name for this account."
                         }, 
                         {
-                            "field": "interval", 
-                            "validators": [
-                                {
-                                    "pattern": "^\\-[1-9]\\d*$|^\\d*$", 
-                                    "errorMsg": "Interval must be an integer.", 
-                                    "type": "regex"
-                                }
-                            ], 
-                            "help": "Time interval of input in seconds.", 
-                            "type": "text", 
-                            "label": "Interval", 
-                            "required": true
-                        }, 
-                        {
-                            "field": "index", 
-                            "required": true, 
-                            "defaultValue": "default", 
-                            "options": {
-                                "createSearchChoice": true, 
-                                "endpointUrl": "data/indexes", 
-                                "blackList": "^_.*$"
-                            }, 
-                            "type": "singleSelect", 
-                            "label": "Index", 
+                            "field": "username", 
                             "validators": [
                                 {
                                     "minLength": 1, 
-                                    "maxLength": 80, 
-                                    "errorMsg": "Length of index name should be between 1 and 80.", 
-                                    "type": "string"
-                                }
-                            ]
-                        }, 
-                        {
-                            "field": "u_splunk_server", 
-                            "validators": [
-                                {
-                                    "minLength": 0, 
-                                    "maxLength": 8192, 
-                                    "errorMsg": "Max length of text input is 8192", 
-                                    "type": "string"
+                                    "errorMsg": "Length of username should be between 1 and 200", 
+                                    "type": "string", 
+                                    "maxLength": 200
                                 }
                             ], 
-                            "help": "The Remote Splunk Server with the source KVStore", 
-                            "type": "text", 
-                            "label": "Splunk Server", 
-                            "required": true
-                        }, 
-                        {
-                            "field": "u_source_app", 
-                            "validators": [
-                                {
-                                    "minLength": 0, 
-                                    "maxLength": 8192, 
-                                    "errorMsg": "Max length of text input is 8192", 
-                                    "type": "string"
-                                }
-                            ], 
-                            "help": "The remote app context with the source KVStore Collection", 
-                            "type": "text", 
-                            "label": "Source App", 
-                            "required": true
-                        }, 
-                        {
-                            "field": "u_source_collection", 
-                            "validators": [
-                                {
-                                    "minLength": 0, 
-                                    "maxLength": 8192, 
-                                    "errorMsg": "Max length of text input is 8192", 
-                                    "type": "string"
-                                }
-                            ], 
-                            "help": "The remote source KVStore Collection Name", 
-                            "type": "text", 
-                            "label": "Source Collection", 
-                            "required": true
-                        }, 
-                        {
-                            "field": "global_account", 
                             "required": true, 
-                            "help": "The stored rest API credential valid on the remote Splunk Server with permissions to the source KVStore", 
+                            "label": "Username", 
                             "options": {
-                                "referenceName": "account"
+                                "placeholder": "Enter the username here"
                             }, 
-                            "type": "singleSelect", 
-                            "label": "Global Account"
+                            "type": "text", 
+                            "help": "Enter the username for this account."
+                        }, 
+                        {
+                            "field": "password", 
+                            "type": "text", 
+                            "encrypted": true, 
+                            "label": "Password", 
+                            "validators": [
+                                {
+                                    "minLength": 1, 
+                                    "errorMsg": "Length of password should be between 1 and 8192", 
+                                    "type": "string", 
+                                    "maxLength": 8192
+                                }
+                            ], 
+                            "required": true, 
+                            "help": "Enter the password for this account."
                         }
-                    ], 
-                    "name": "kvstore_to_index", 
-                    "title": "KVStore to Index"
+                    ]
                 }, 
                 {
+                    "title": "Logging", 
+                    "name": "logging", 
                     "entity": [
                         {
-                            "field": "name", 
-                            "validators": [
-                                {
-                                    "pattern": "^[a-zA-Z]\\w*$", 
-                                    "errorMsg": "Input Name must start with a letter and followed by alphabetic letters, digits or underscores.", 
-                                    "type": "regex"
-                                }, 
-                                {
-                                    "minLength": 1, 
-                                    "maxLength": 100, 
-                                    "errorMsg": "Length of input name should be between 1 and 100", 
-                                    "type": "string"
-                                }
-                            ], 
-                            "help": "Enter a unique name for the data input", 
-                            "type": "text", 
-                            "label": "Name", 
-                            "required": true
-                        }, 
-                        {
-                            "field": "interval", 
-                            "validators": [
-                                {
-                                    "pattern": "^\\-[1-9]\\d*$|^\\d*$", 
-                                    "errorMsg": "Interval must be an integer.", 
-                                    "type": "regex"
-                                }
-                            ], 
-                            "help": "Time interval of input in seconds.", 
-                            "type": "text", 
-                            "label": "Interval", 
-                            "required": true
-                        }, 
-                        {
-                            "field": "index", 
-                            "required": true, 
-                            "defaultValue": "default", 
                             "options": {
-                                "createSearchChoice": true, 
-                                "endpointUrl": "data/indexes", 
-                                "blackList": "^_.*$"
-                            }, 
-                            "type": "singleSelect", 
-                            "label": "Index", 
-                            "validators": [
-                                {
-                                    "minLength": 1, 
-                                    "maxLength": 80, 
-                                    "errorMsg": "Length of index name should be between 1 and 80.", 
-                                    "type": "string"
-                                }
-                            ]
-                        }, 
-                        {
-                            "field": "u_splunkserver", 
-                            "validators": [
-                                {
-                                    "minLength": 0, 
-                                    "maxLength": 8192, 
-                                    "errorMsg": "Max length of text input is 8192", 
-                                    "type": "string"
-                                }
-                            ], 
-                            "help": "The Remote Splunk Server with the source KVStore", 
-                            "type": "text", 
-                            "label": "Splunk Server", 
-                            "required": true
-                        }, 
-                        {
-                            "field": "u_srcapp", 
-                            "validators": [
-                                {
-                                    "minLength": 0, 
-                                    "maxLength": 8192, 
-                                    "errorMsg": "Max length of text input is 8192", 
-                                    "type": "string"
-                                }
-                            ], 
-                            "help": "The remote app context with the source KVStore Collection", 
-                            "type": "text", 
-                            "label": "Source App", 
-                            "required": true
-                        }, 
-                        {
-                            "field": "u_srccollection", 
-                            "validators": [
-                                {
-                                    "minLength": 0, 
-                                    "maxLength": 8192, 
-                                    "errorMsg": "Max length of text input is 8192", 
-                                    "type": "string"
-                                }
-                            ], 
-                            "help": "The remote source KVStore Collection Name", 
-                            "type": "text", 
-                            "label": "Source Collection", 
-                            "required": true
-                        }, 
-                        {
-                            "field": "global_account", 
-                            "required": true, 
-                            "help": "The stored rest API credential valid on the remote Splunk Server with permissions to the source KVStore", 
-                            "options": {
-                                "referenceName": "account"
-                            }, 
-                            "type": "singleSelect", 
-                            "label": "Global Account"
-                        }, 
-                        {
-                            "field": "u_desttableaction", 
-                            "options": {
-                                "items": [
+                                "disableSearch": true, 
+                                "autoCompleteFields": [
                                     {
-                                        "label": "Replace Table", 
-                                        "value": "replace"
+                                        "value": "DEBUG", 
+                                        "label": "DEBUG"
                                     }, 
                                     {
-                                        "label": "Update Table", 
-                                        "value": "update"
+                                        "value": "INFO", 
+                                        "label": "INFO"
+                                    }, 
+                                    {
+                                        "value": "WARNING", 
+                                        "label": "WARNING"
+                                    }, 
+                                    {
+                                        "value": "ERROR", 
+                                        "label": "ERROR"
+                                    }, 
+                                    {
+                                        "value": "CRITICAL", 
+                                        "label": "CRITICAL"
                                     }
                                 ]
                             }, 
-                            "required": true, 
-                            "defaultValue": "update", 
-                            "help": "Choose to force destination table full replacement or update table.", 
-                            "type": "radio", 
-                            "label": "Destination Table Action"
-                        }, 
-                        {
-                            "field": "u_destapp", 
-                            "validators": [
-                                {
-                                    "minLength": 0, 
-                                    "maxLength": 8192, 
-                                    "errorMsg": "Max length of text input is 8192", 
-                                    "type": "string"
-                                }
-                            ], 
-                            "help": "The local app context with the destination KVStore Collection", 
-                            "type": "text", 
-                            "label": "Destination App", 
-                            "required": true
-                        }, 
-                        {
-                            "field": "u_destcollection", 
-                            "validators": [
-                                {
-                                    "minLength": 0, 
-                                    "maxLength": 8192, 
-                                    "errorMsg": "Max length of text input is 8192", 
-                                    "type": "string"
-                                }
-                            ], 
-                            "help": "The local destination KVStore Collection Name", 
-                            "type": "text", 
-                            "label": "Destination Collection", 
-                            "required": true
+                            "defaultValue": "INFO", 
+                            "field": "loglevel", 
+                            "type": "singleSelect", 
+                            "label": "Log level"
                         }
-                    ], 
-                    "name": "kvstore_to_kvstore", 
-                    "title": "KVStore to KVStore"
+                    ]
                 }
             ]
         }
-    }, 
-    "meta": {
-        "version": "1.0.1", 
-        "apiVersion": "3.0.0", 
-        "name": "TA-SyncKVStore", 
-        "restRoot": "TA_SyncKVStore", 
-        "displayName": "SyncKVStore"
     }
 }

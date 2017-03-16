@@ -223,7 +223,7 @@ def collect_events(helper, ew):
             postList = []
             postList.append(entry)
             
-        destKVStore.postDataToSplunk(postList)
+    destKVStore.postDataToSplunk(postList)
         
     destKVStore.waitUntilDone()
     
