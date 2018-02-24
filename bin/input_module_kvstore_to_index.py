@@ -161,7 +161,7 @@ def collect_events(helper, ew):
     for entry in srcKVStoreTable:
         dataToIndex = {}
         orig_key = entry.pop('_key')
-        dataToIndex = {k:entry.get(k) for k,v in entry.items() if not k.startswith('_')}
+        dataToIndex = {k:entry.get(k) for k,v in entry.items() if v and not k.startswith('_')}
         dataToIndex['key'] = orig_key
         event = helper.new_event(source=helper.get_input_type(), index=helper.get_output_index(), sourcetype=helper.get_sourcetype(), data=json.dumps(dataToIndex))
         
