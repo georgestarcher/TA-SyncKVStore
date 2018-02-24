@@ -141,7 +141,9 @@ def process_event(helper, *args, **kwargs):
     destKVStore = splunk_sendto_kvstore(u_splunkserver, u_destappname, u_destcollection, user_account.get('username'), user_account.get('password'))
     
     postList = []
+    hasSearchResults = False 
     for entry in searchResults:
+        hasSearchResults = True
         outputEntry = {}
         outputEntry = {k: v for k, v in entry.items() if v}
         if ((len(json.dumps(postList)) + len(json.dumps(outputEntry))) < _max_content_bytes) and (len(postList) + 1 < _max_content_records):
@@ -150,10 +152,12 @@ def process_event(helper, *args, **kwargs):
             destKVStore.postDataToSplunk(postList)
             postList = []
             postList.append(outputEntry)
-            
-    destKVStore.postDataToSplunk(postList)
-        
-    destKVStore.waitUntilDone()
+    
+    if not hasSearchResults: 
+        helper.log_error("Search Results were Empty")
+    else:   
+        destKVStore.postDataToSplunk(postList)
+        destKVStore.waitUntilDone()
     
     helper.log_info("Alert action synckvstore completed.")
     
