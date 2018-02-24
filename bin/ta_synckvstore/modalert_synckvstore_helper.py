@@ -142,12 +142,14 @@ def process_event(helper, *args, **kwargs):
     
     postList = []
     for entry in searchResults:
-        if ((len(json.dumps(postList)) + len(json.dumps(entry))) < _max_content_bytes) and (len(postList) + 1 < _max_content_records):
-            postList.append(entry)
+        outputEntry = {}
+        outputEntry = {k: v for k, v in entry.items() if v}
+        if ((len(json.dumps(postList)) + len(json.dumps(outputEntry))) < _max_content_bytes) and (len(postList) + 1 < _max_content_records):
+            postList.append(outputEntry)
         else:
             destKVStore.postDataToSplunk(postList)
             postList = []
-            postList.append(entry)
+            postList.append(outputEntry)
             
     destKVStore.postDataToSplunk(postList)
         
