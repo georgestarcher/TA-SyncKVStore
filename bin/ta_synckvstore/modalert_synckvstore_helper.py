@@ -11,11 +11,11 @@ def process_event(helper, *args, **kwargs):
 
     [sample_code_macro:start]
 
-    # The following example gets account information
-    user_account = helper.get_user_credential("<account_name>")
-
     # The following example gets and sets the log level
     helper.set_log_level(helper.log_level)
+
+    # The following example gets account information
+    user_account = helper.get_user_credential("<account_name>")
 
     # The following example gets the alert action parameters and prints them to the log
     u_splunkserver = helper.get_param("u_splunkserver")
@@ -141,11 +141,10 @@ def process_event(helper, *args, **kwargs):
     destKVStore = splunk_sendto_kvstore(u_splunkserver, u_destappname, u_destcollection, user_account.get('username'), user_account.get('password'))
     
     postList = []
-    hasSearchResults = False 
     for entry in searchResults:
-        hasSearchResults = True
         outputEntry = {}
         outputEntry = {k: v for k, v in entry.items() if v}
+        outputEntry.update({k: v.split('\n') for k, v in outputEntry.items() if v and not k.startswith('_')})
         if ((len(json.dumps(postList)) + len(json.dumps(outputEntry))) < _max_content_bytes) and (len(postList) + 1 < _max_content_records):
             postList.append(outputEntry)
         else:
@@ -153,11 +152,10 @@ def process_event(helper, *args, **kwargs):
             postList = []
             postList.append(outputEntry)
     
-    if not hasSearchResults: 
-        helper.log_error("Search Results were Empty")
-    else:   
-        destKVStore.postDataToSplunk(postList)
-        destKVStore.waitUntilDone()
+    helper.log_info("exited search results loop")        
+    destKVStore.postDataToSplunk(postList)
+        
+    destKVStore.waitUntilDone()
     
     helper.log_info("Alert action synckvstore completed.")
     
