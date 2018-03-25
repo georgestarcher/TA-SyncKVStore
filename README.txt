@@ -1,4 +1,4 @@
-## TA-SyncKVStore
+# TA-SyncKVStore
 
 Author: George Starcher (starcher)
 Email: george@georgestarcher.com
@@ -29,19 +29,21 @@ Now it has two modular inputs. One to pull a remote KVStore to a local KVStore. 
 First you need to setup the TA by adding the appropriate Splunk User with permissions to the remote KVStore.
 This is stored in the Splunk Encrypted password storage.
 
-###Modular Alert
+### Modular Alert
 
 Devise your search that results are a table matching the format for the remote KVStore based table (collection). Schedule the search and attach the modular alert to send the results to the remote KVStore.
 
-###Modular Input KVStore to KVStore
+The alert has been updated that if a field has '\n\ new line characters in it that it will be sent as a multivalue. This is because the alert is most often used with inputlookup of a kvstore you want to send across and the nultivalue fields were being turned into single value strings.
+
+### Modular Input KVStore to KVStore
 
 This expects the same collection definition on the source KVStore as the local receiving KVStore. 
 
-###Modular Input KVStore to Index
+### Modular Input KVStore to Index
 
 This pulls the remote KVStore and drops the hidden fields. It exposes the _key from the KVStore as a field named key and adds the json formatted records to the deestination index.
 
-##Update vs Replace
+## Update vs Replace
 
 You have the option to replace the destination KVStore table. This means a delete all data is executed before the new table results are added.
 
