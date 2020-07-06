@@ -5,6 +5,7 @@ import os
 import sys
 import time
 import datetime
+from six.moves import range
 
 '''
     IMPORTANT
@@ -21,7 +22,13 @@ def use_single_instance_mode():
 def validate_input(helper, definition):
     """Implement your own validation logic to validate the input stanza configurations"""
     # This example accesses the modular input variable
+    # u_splunkserver = definition.parameters.get('u_splunkserver', None)
+    # u_srcapp = definition.parameters.get('u_srcapp', None)
+    # u_srccollection = definition.parameters.get('u_srccollection', None)
     # global_account = definition.parameters.get('global_account', None)
+    # u_desttableaction = definition.parameters.get('u_desttableaction', None)
+    # u_destapp = definition.parameters.get('u_destapp', None)
+    # u_destcollection = definition.parameters.get('u_destcollection', None)
     pass
 
 def collect_events(helper, ew):
@@ -30,9 +37,21 @@ def collect_events(helper, ew):
     # The following examples get the arguments of this input.
     # Note, for single instance mod input, args will be returned as a dict.
     # For multi instance mod input, args will be returned as a single value.
+    opt_u_splunkserver = helper.get_arg('u_splunkserver')
+    opt_u_srcapp = helper.get_arg('u_srcapp')
+    opt_u_srccollection = helper.get_arg('u_srccollection')
     opt_global_account = helper.get_arg('global_account')
+    opt_u_desttableaction = helper.get_arg('u_desttableaction')
+    opt_u_destapp = helper.get_arg('u_destapp')
+    opt_u_destcollection = helper.get_arg('u_destcollection')
     # In single instance mode, to get arguments of a particular input, use
+    opt_u_splunkserver = helper.get_arg('u_splunkserver', stanza_name)
+    opt_u_srcapp = helper.get_arg('u_srcapp', stanza_name)
+    opt_u_srccollection = helper.get_arg('u_srccollection', stanza_name)
     opt_global_account = helper.get_arg('global_account', stanza_name)
+    opt_u_desttableaction = helper.get_arg('u_desttableaction', stanza_name)
+    opt_u_destapp = helper.get_arg('u_destapp', stanza_name)
+    opt_u_destcollection = helper.get_arg('u_destcollection', stanza_name)
 
     # get input type
     helper.get_input_type()
@@ -120,12 +139,11 @@ def collect_events(helper, ew):
         event = helper.new_event(source=input_type, index=helper.get_output_index(stanza_name), sourcetype=helper.get_sourcetype(stanza_name), data=data)
         ew.write_event(event)
     '''
-    
     try:
         import splunklib.client as splunkClient
         import json
         import requests
-        import threading, Queue
+        import threading, six.moves.queue 
     except Exception as err_message:
         helper.log_error("{}".format(err_message))
         return 1
@@ -135,7 +153,7 @@ def collect_events(helper, ew):
     _number_of_threads = 5
     _splunk_server_verify = False
 
-    # Define my own class to put data into KVStore. 
+    # Define my own class to put data into KVStore.
     # The Splunk Python SDK is not threaded for KVStore operations
     class splunk_sendto_kvstore:
 
@@ -144,7 +162,7 @@ def collect_events(helper, ew):
             self.splunk_app = splunk_app
             self.splunk_collection = splunk_collection
             self.session_key = session_key
-            self.flushQueue = Queue.Queue(0)
+            self.flushQueue = six.moves.queue.Queue(0)
             for x in range(_number_of_threads):
                 t = threading.Thread(target=self.batchThread)
                 t.daemon = True
@@ -152,7 +170,7 @@ def collect_events(helper, ew):
 
         def postDataToSplunk(self, data):
             self.flushQueue.put(data)
-        
+
         def batchThread(self):
             while True:
                 data = self.flushQueue.get()
@@ -167,11 +185,11 @@ def collect_events(helper, ew):
         def waitUntilDone(self):
             self.flushQueue.join()
             return
-   
+
     helper.log_info("Modular Input pullkvtokv started.")
 
     u_session_key = helper.context_meta.get('session_key')
-    
+
     u_splunkserver = helper.get_arg('u_splunkserver')
     helper.log_info("u_splunkserver={}".format(u_splunkserver))
 
@@ -180,40 +198,40 @@ def collect_events(helper, ew):
 
     u_srccollection = helper.get_arg("u_srccollection")
     helper.log_info("u_destcollection={}".format(u_srccollection))
-    
+
     u_destappname = helper.get_arg("u_destapp")
     helper.log_info("u_destappname={}".format(u_destappname))
 
     u_destcollection = helper.get_arg("u_destcollection")
     helper.log_info("u_destcollection={}".format(u_destcollection))
-    
+
     u_desttableaction = helper.get_arg("u_desttableaction")
     helper.log_info("u_desttableaction={}".format(u_desttableaction))
-    
+
     user_account = helper.get_arg('global_account')
     if not user_account:
         helper.log_error("No user account selected")
         return 1
-    
+
     srcSplunkService = splunkClient.connect(host=u_splunkserver, port=8089, username=user_account.get('username'), password=user_account.get('password'),owner='nobody',app=u_srcappname)
-    
+
     srcKVStoreTable = srcSplunkService.kvstore[u_srccollection].data.query()
-    
+
     destSplunkService = splunkClient.connect(token=u_session_key, owner='nobody', app=u_destappname)
-    
+
     #Check if KVStore collection exists
     if u_destcollection not in destSplunkService.kvstore:
         helper.log_error("KVStore collection {0} not on local Splunk instance".format(u_destcollection))
         return 1
-   
+
     # If replace method is selected use SDK KVStore to delete the data in the collection
     if u_desttableaction == "replace":
         destSplunkService.kvstore[u_destcollection].data.delete()
         helper.log_info("action=deleted collection_name={0} message=\"Remote Collection Data Deleted\"".format(u_destcollection))
 
-    # Define our threaded class for KVStore data submission        
+    # Define our threaded class for KVStore data submission
     destKVStore = splunk_sendto_kvstore('localhost', u_destappname, u_destcollection, u_session_key)
-    
+
     postList = []
     for entry in srcKVStoreTable:
         if ((len(json.dumps(postList)) + len(json.dumps(entry))) < _max_content_bytes) and (len(postList) + 1 < _max_content_records):
@@ -222,11 +240,10 @@ def collect_events(helper, ew):
             destKVStore.postDataToSplunk(postList)
             postList = []
             postList.append(entry)
-            
-    destKVStore.postDataToSplunk(postList)
-        
-    destKVStore.waitUntilDone()
-    
-    helper.log_info("Modular Input pullkvtokv completed.")
 
+    destKVStore.postDataToSplunk(postList)
+
+    destKVStore.waitUntilDone()
+
+    helper.log_info("Modular Input pullkvtokv completed.")
 
