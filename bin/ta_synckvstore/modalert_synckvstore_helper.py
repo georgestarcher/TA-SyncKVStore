@@ -1,4 +1,4 @@
-
+from six.moves import range
 # encoding = utf-8
 
 def process_event(helper, *args, **kwargs):
@@ -52,7 +52,8 @@ def process_event(helper, *args, **kwargs):
         import splunklib.client as splunkClient
         import datetime
         import requests
-        import threading, Queue
+        import threading
+        import six.moves.queue
         import json
     except Exception as err_message:
         helper.log_error("{}".format(err_message))
@@ -73,7 +74,7 @@ def process_event(helper, *args, **kwargs):
             self.splunk_collection = splunk_collection
             self.splunk_user = splunk_user
             self.splunk_password = splunk_password
-            self.flushQueue = Queue.Queue(0)
+            self.flushQueue = six.moves.queue.Queue(0)
             for x in range(_number_of_threads):
                 t = threading.Thread(target=self.batchThread)
                 t.daemon = True
