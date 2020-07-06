@@ -5,7 +5,7 @@
     "id": {
       "group": null,
       "name": "TA-SyncKVStore",
-      "version": "1.0.2"
+      "version": "1.0.3"
     },
     "author": [
       {
@@ -41,7 +41,7 @@
   "dependencies": {
   },
   "tasks": [],
-  "forwarderGroups": {
+  "inputGroups": {
   },
   "incompatibleApps": {
   },

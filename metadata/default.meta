@@ -3,5 +3,32 @@
 access = read : [ * ], write : [ admin ]
 export = system
 
-[views/setup]
+[views]
+access = read : [ * ], write : [ admin ]
 export = none
+
+[props/source%3A%3A...synckvstore_modalert.log%2A]
+owner = admin
+version = 8.0.4.1
+modtime = 1593759510.087884000
+
+[props/kv2idx]
+owner = admin
+version = 8.0.4.1
+modtime = 1593760140.860789000
+
+[props/source%3A%3A...ta-synckvstore%2A.log%2A]
+owner = admin
+version = 8.0.4.1
+modtime = 1593760141.164018000
+
+[props/source%3A%3A...ta_synckvstore%2A.log%2A]
+owner = admin
+version = 8.0.4.1
+modtime = 1593760141.344827000
+
+[props/kvstore_to_kvstore]
+owner = admin
+version = 8.0.4.1
+modtime = 1593760598.069127000
+
