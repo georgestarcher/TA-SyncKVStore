@@ -1,3 +1,5 @@
+from __future__ import print_function
+from builtins import str
 import csv
 import gzip
 import sys
@@ -7,9 +9,9 @@ try:
 except ImportError:
     from splunk.appserver.mrsparkle.lib.util import make_splunkhome_path
 
+# TODO: How does it depend on CIM module?
 sys.path.insert(0, make_splunkhome_path(["etc", "apps", "Splunk_SA_CIM", "lib"]))
 
-import requests
 from cim_actions import ModularAction
 from logging_helper import get_logger
 import logging
@@ -32,9 +34,6 @@ class ModularAlertBase(ModularAction):
         self.splunk_uri = self.settings.get('server_uri')
         self.setup_util = Setup_Util(self.splunk_uri, self.session_key, self._logger)
 
-        level = self.get_log_level()
-        if level:
-            self._logger.setLevel(level)
         self.rest_helper = TARestHelper(self._logger)
 
     def log_error(self, msg):
@@ -179,30 +178,62 @@ class ModularAlertBase(ModularAction):
         return result
 
     def get_events(self):
-        self.result_handle = gzip.open(self.results_file, 'rb')
-        return (self.pre_handle(num, result) for num, result in enumerate(csv.DictReader(self.result_handle)))
+        try:
+            try:
+                self.result_handle = gzip.open(self.results_file, 'rt')
+            except ValueError: # Workaround for Python 2.7 on Windows
+                self.result_handle = gzip.open(self.results_file, 'r')
+            return (self.pre_handle(num, result) for num, result in enumerate(csv.DictReader(self.result_handle)))
+        except IOError:
+            msg = "Error: {}."
+            self.log_error(msg.format("No search result. Cannot send alert action."))
+            sys.exit(2)
 
     def prepare_meta_for_cam(self):
-        with gzip.open(self.results_file, 'rb') as rf:
+        try:
+            try:
+                rf = gzip.open(self.results_file, 'rt')
+            except ValueError: # Workaround for Python 2.7 on Windows
+                rf = gzip.open(self.results_file, 'r')
             for num, result in enumerate(csv.DictReader(rf)):
                 result.setdefault('rid', str(num))
                 self.update(result)
                 self.invoke()
                 break
+        finally:
+            if rf:
+                rf.close()
 
     def run(self, argv):
         status = 0
         if len(argv) < 2 or argv[1] != "--execute":
             msg = 'Error: argv="{}", expected="--execute"'.format(argv)
-            print >> sys.stderr, msg
+            print(msg, file=sys.stderr)
             sys.exit(1)
+
+        # prepare meta first for permission lack error handling: TAB-2455
+        self.prepare_meta_for_cam()
+        try:
+            level = self.get_log_level()
+            if level:
+                self._logger.setLevel(level)
+        except Exception as e:
+            if e and '403' in str(e):
+                self.log_error('User does not have permissions')
+            else:
+                self.log_error('Unable to set log level')
+            sys.exit(2)
 
         try:
             status = self.process_event()
+        except IOError:
+            msg = "Error: {}."
+            self.log_error(msg.format("No search result. Cannot send alert action."))
+            sys.exit(2)
         except Exception as e:
             msg = "Unexpected error: {}."
-            if e.message:
-                self.log_error(msg.format(e.message))
+            if e:
+                self.log_error(msg.format(str(e)))
             else:
                 import traceback
                 self.log_error(msg.format(traceback.format_exc()))

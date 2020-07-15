@@ -129,20 +129,19 @@ def collect_events(helper, ew):
         event = helper.new_event(source=input_type, index=helper.get_output_index(stanza_name), sourcetype=helper.get_sourcetype(stanza_name), data=data)
         ew.write_event(event)
     '''
-
     try:
         import splunklib.client as splunkClient
         import json
-        import urllib
+        import six.moves.urllib.request, six.moves.urllib.parse, six.moves.urllib.error
     except Exception as err_message:
         helper.log_error("{}".format(err_message))
         return 1
 
-  
+
     helper.log_info("Modular Input pullkvtoindex started.")
 
     u_session_key = helper.context_meta.get('session_key')
-    
+
     u_splunkserver = helper.get_arg('u_splunk_server')
     helper.log_info("u_splunkserver={}".format(u_splunkserver))
 
@@ -151,24 +150,25 @@ def collect_events(helper, ew):
 
     u_srccollection = helper.get_arg("u_source_collection")
     helper.log_info("u_destcollection={}".format(u_srccollection))
-    
+
     user_account = helper.get_arg('global_account')
-    
+
     srcSplunkService = splunkClient.connect(host=u_splunkserver, port=8089, username=user_account.get('username'), password=user_account.get('password'),owner='nobody',app=u_srcappname)
-    
+
     srcKVStoreTable = srcSplunkService.kvstore[u_srccollection].data.query()
-    
+
     for entry in srcKVStoreTable:
         dataToIndex = {}
         orig_key = entry.pop('_key')
-        dataToIndex = {k:entry.get(k) for k,v in entry.items() if v and not k.startswith('_')}
+        dataToIndex = {k:entry.get(k) for k,v in list(entry.items()) if not k.startswith('_')}
         dataToIndex['key'] = orig_key
         event = helper.new_event(source=helper.get_input_type(), index=helper.get_output_index(), sourcetype=helper.get_sourcetype(), data=json.dumps(dataToIndex))
-        
+
         try:
             ew.write_event(event)
         except Exception as e:
             raise e
-  
-        
+
+
     helper.log_info("Modular Input pullkvtoindex completed.")
+

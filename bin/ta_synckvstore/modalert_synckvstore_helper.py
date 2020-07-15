@@ -1,4 +1,4 @@
-
+from six.moves import range
 # encoding = utf-8
 
 def process_event(helper, *args, **kwargs):
@@ -10,12 +10,6 @@ def process_event(helper, *args, **kwargs):
     # are updated.
 
     [sample_code_macro:start]
-
-    # The following example gets and sets the log level
-    helper.set_log_level(helper.log_level)
-
-    # The following example gets account information
-    user_account = helper.get_user_credential("<account_name>")
 
     # The following example gets the alert action parameters and prints them to the log
     u_splunkserver = helper.get_param("u_splunkserver")
@@ -53,11 +47,13 @@ def process_event(helper, *args, **kwargs):
     [sample_code_macro:end]
     """
 
+    helper.log_info("Alert action synckvstore started.")
     try:
         import splunklib.client as splunkClient
         import datetime
         import requests
-        import threading, Queue
+        import threading
+        import six.moves.queue
         import json
     except Exception as err_message:
         helper.log_error("{}".format(err_message))
@@ -68,7 +64,7 @@ def process_event(helper, *args, **kwargs):
     _number_of_threads = 5
     _splunk_server_verify = False
 
-    # Define my own class to put data into KVStore. 
+    # Define my own class to put data into KVStore.
     # The Splunk Python SDK is not threaded for KVStore operations
     class splunk_sendto_kvstore:
 
@@ -78,7 +74,7 @@ def process_event(helper, *args, **kwargs):
             self.splunk_collection = splunk_collection
             self.splunk_user = splunk_user
             self.splunk_password = splunk_password
-            self.flushQueue = Queue.Queue(0)
+            self.flushQueue = six.moves.queue.Queue(0)
             for x in range(_number_of_threads):
                 t = threading.Thread(target=self.batchThread)
                 t.daemon = True
@@ -86,7 +82,7 @@ def process_event(helper, *args, **kwargs):
 
         def postDataToSplunk(self, data):
             self.flushQueue.put(data)
-        
+
         def batchThread(self):
             while True:
                 data = self.flushQueue.get()
@@ -101,7 +97,7 @@ def process_event(helper, *args, **kwargs):
         def waitUntilDone(self):
             self.flushQueue.join()
             return
-    
+
     helper.log_info("Alert action synckvstore started.")
 
     u_splunkserver = helper.get_param("u_splunkserver")
@@ -115,48 +111,44 @@ def process_event(helper, *args, **kwargs):
 
     u_desttableaction = helper.get_param("u_desttableaction")
     helper.log_info("u_desttableaction={}".format(u_desttableaction))
-    
+
     u_username = helper.get_param("u_username")
     helper.log_info("u_username={}".format(u_username))
-    
+
     user_account = helper.get_user_credential(u_username)
-    
+
     searchResults = helper.get_events()
-    
+
     splunkService = splunkClient.connect(host=u_splunkserver, port=8089, username=user_account.get('username'), password=user_account.get('password'),owner='nobody',app=u_destappname)
-    
+
     #Check if KVStore collection exists
     if u_destcollection not in splunkService.kvstore:
         helper.log_error("message=\"Collection Not Found\" dest_server={0} dest_collection={1}".format(u_splunkserver,u_destcollection))
         for collection in splunkService.kvstore:
             helper.log_error("{}".format(collection.name))
         return 1
-    
+
     # If replace method is selected use SDK KVStore to delete the data in the collection
     if u_desttableaction == "replace":
         splunkService.kvstore[u_destcollection].data.delete()
         helper.log_info("action=deleted collection_name={0} message=\"Remote Collection Data Deleted\"".format(u_destcollection))
 
-    # Define our threaded class for KVStore data submission        
+    # Define our threaded class for KVStore data submission
     destKVStore = splunk_sendto_kvstore(u_splunkserver, u_destappname, u_destcollection, user_account.get('username'), user_account.get('password'))
-    
+
     postList = []
     for entry in searchResults:
-        outputEntry = {}
-        outputEntry = {k: v for k, v in entry.items() if v}
-        outputEntry.update({k: v.split('\n') for k, v in outputEntry.items() if v and not k.startswith('_')})
-        if ((len(json.dumps(postList)) + len(json.dumps(outputEntry))) < _max_content_bytes) and (len(postList) + 1 < _max_content_records):
-            postList.append(outputEntry)
+        if ((len(json.dumps(postList)) + len(json.dumps(entry))) < _max_content_bytes) and (len(postList) + 1 < _max_content_records):
+            postList.append(entry)
         else:
             destKVStore.postDataToSplunk(postList)
             postList = []
-            postList.append(outputEntry)
-    
-    helper.log_info("exited search results loop")        
+            postList.append(entry)
+
     destKVStore.postDataToSplunk(postList)
-        
+
     destKVStore.waitUntilDone()
-    
+
     helper.log_info("Alert action synckvstore completed.")
-    
+
     return 0
